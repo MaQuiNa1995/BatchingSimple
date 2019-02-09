@@ -1,10 +1,10 @@
 package es.cic.cmunoz.batching;
 
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.joda.time.DateTime;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
@@ -13,29 +13,30 @@ public class MapeadoJobListener implements JobExecutionListener {
 
     private static final Logger LOG = Logger.getLogger(MapeadoJobListener.class.getName());
 
-    private DateTime horaInicio;
+    private Date horaInicio;
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
 
-        horaInicio = new DateTime();
+        horaInicio = new Date();
         LOG.log(Level.INFO, "Campeon Job Empieza a Las: {0}", horaInicio);
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
 
-        DateTime horaTerminado;
-
-        horaTerminado = new DateTime();
+        Date horaTerminado = new Date();
+        
         LOG.log(Level.INFO, "Campeon Job Termino a Las: {0}", horaTerminado);
         LOG.log(Level.INFO, "Tiempo Empleado: {0} Segundos", calcularTiempo(horaInicio, horaTerminado) / 1000f);
 
-        if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
+        BatchStatus codigoEjecucion = jobExecution.getStatus();
+        
+        if (codigoEjecucion == BatchStatus.COMPLETED) {
 
             LOG.info("Campeon Job Completado");
 
-        } else if (jobExecution.getStatus() == BatchStatus.FAILED) {
+        } else if (codigoEjecucion == BatchStatus.FAILED) {
 
             LOG.warning("Campeon Job Fallo Con Las Siguientes Excepciones: ");
 
@@ -44,18 +45,14 @@ public class MapeadoJobListener implements JobExecutionListener {
             exceptionList.stream().forEach((Throwable th) -> {
                 LOG.warning(th.getLocalizedMessage());
             });
-
-//            exceptionList.stream().forEach((th) -> {
-//                LOG.warning(th.getLocalizedMessage());
-//            });
         }
     }
 
-    private long calcularTiempo(DateTime inicio, DateTime fin) {
+    private long calcularTiempo(Date inicio, Date fin) {
 
-        long fechaAhora = fin.getMillis() - inicio.getMillis();
+        long milisTranscurridos = fin.getTime() - inicio.getTime();
 
-        return fechaAhora;
+        return milisTranscurridos;
     }
 
 }

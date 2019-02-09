@@ -6,24 +6,39 @@
                            http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
                            http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
-                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context-3.2.xsd">
 
-	<!--<import resource="classpath:context-datasource.xml" /> -->
+	<context:component-scan
+		base-package="es.cic.cmunoz" />
 
-	<context:component-scan base-package="es.cic.cmunoz">
-	</context:component-scan>
 
-	<!-- JobRepository and JobLauncher are configuration/setup classes -->
-	<bean id="jobRepository"
-		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" />
 
 	<bean id="jobLauncher"
 		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
 		<property name="jobRepository" ref="jobRepository" />
 	</bean>
+
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" />
+
+
+	<!-- Se usa para que Spring inyecte los archivos de propiedades y podamos 
+		usar su valor -->
 	<bean id="propertyConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-		<property name="location" value="configuracion.properties" />
+		<!-- se usa para hacer referencia a las localizaciones donde van nuestros 
+			archivos de propiedades -->
+
+		<!-- Asi para 1 archivo -->
+		<!-- <property name="location" value="configuracion.properties" /> -->
+
+		<!-- Asi para varios -->
+		<property name="locations">
+			<list>
+				<value>configuracion.properties</value>
+			</list>
+		</property>
 	</bean>
 
 	<bean id="databaseItemReader"
@@ -36,7 +51,7 @@
 				<property name="databaseType" value="MySQL" />
 				<property name="selectClause" value="SELECT ${sql.select}" />
 				<property name="fromClause" value="FROM ${sql.from}" />
-				<property name="whereClause" value="WHERE ${sql.where}" />
+				<!-- <property name="whereClause" value="WHERE ${sql.where}" /> -->
 				<property name="sortKey" value="${sql.orderBy}" />
 			</bean>
 		</property>
@@ -47,7 +62,8 @@
 	</bean>
 
 	<!-- ItemWriter writes a line into output flat file -->
-	<bean id="flatFileItemWriter" class="org.springframework.batch.item.file.FlatFileItemWriter"
+	<bean id="flatFileItemWriter"
+		class="org.springframework.batch.item.file.FlatFileItemWriter"
 		scope="step">
 
 		<property name="resource" value="file:${carpeta.destino}" />
@@ -74,11 +90,8 @@
 
 	<!-- Optional JobExecutionListener to perform business logic before and 
 		after the job -->
-	<bean id="jobListener" class="es.cic.cmunoz.batching.MapeadoJobListener" />
-
-	<!-- Optional ItemProcessor to perform business logic/filtering on the input 
-		records -->
-	<bean id="itemProcessor" class="es.cic.cmunoz.batching.MapeadoItemProcessor" />
+	<bean id="jobListener"
+		class="es.cic.cmunoz.batching.MapeadoJobListener" />
 
 	<!-- Step will need a transaction manager -->
 	<bean id="transactionManager"
@@ -88,8 +101,9 @@
 	<batch:job id="campeonResultJob">
 		<batch:step id="pasoUno">
 			<batch:tasklet transaction-manager="transactionManager">
-				<batch:chunk reader="databaseItemReader" writer="flatFileItemWriter"
-					processor="itemProcessor" commit-interval="${job.commit}" />
+				<batch:chunk reader="databaseItemReader"
+					writer="flatFileItemWriter" 
+					commit-interval="${job.commit}" />
 			</batch:tasklet>
 		</batch:step>
 		<batch:listeners>
@@ -102,7 +116,7 @@
 
 		<property name="driverClassName" value="org.sqlite.JDBC" />
 		<property name="url"
-			value="jdbc:sqlite:C:/Users/cmunoz/InfoLol/BaseDatos/LeagueOfLegends.sqlite" />
+			value="jdbc:sqlite:D:\Users\MaQuiNa1995\Desktop\Ejemplo_SpringBatch\src\main\resources\LeagueOfLegends.sqlite" />
 	</bean>
 
 </beans>			

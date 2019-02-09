@@ -15,7 +15,7 @@ import es.cic.cmunoz.domain.Mapeado;
 public class MapeadoRowMapper implements RowMapper<Mapeado> {
 
     @Value("${sql.select}")
-    String[] tablas;
+    private String[] tablas;
 
     @Override
     public Mapeado mapRow(ResultSet rs, int rowNum) throws SQLException {
