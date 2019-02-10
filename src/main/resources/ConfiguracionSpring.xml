@@ -9,19 +9,21 @@
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context-3.2.xsd">
 
+	<!-- Le decimos a spring donde buscar los bean que hemos anotado con @Component 
+		o equivalente -->
 	<context:component-scan
-		base-package="es.cic.cmunoz" />
+		base-package="es.maquina" />
 
 
-
+	<!-- Creacion del lanzador de jobs -->
 	<bean id="jobLauncher"
 		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
 		<property name="jobRepository" ref="jobRepository" />
 	</bean>
 
+	<!-- Creacion del repositorio de jobs -->
 	<bean id="jobRepository"
 		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean" />
-
 
 	<!-- Se usa para que Spring inyecte los archivos de propiedades y podamos 
 		usar su valor -->
@@ -41,9 +43,13 @@
 		</property>
 	</bean>
 
+	<!-- Reader generico para leer bases de datos -->
 	<bean id="databaseItemReader"
 		class="org.springframework.batch.item.database.JdbcPagingItemReader">
+		<!-- Seteamos el datasource -->
 		<property name="dataSource" ref="dataSource" />
+		<!-- Seteamos las propiedades de nuestro proveedor de de querys para el 
+			reader -->
 		<property name="queryProvider">
 			<bean
 				class="org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean">
@@ -56,29 +62,35 @@
 			</bean>
 		</property>
 		<property name="pageSize" value="${sql.paginacion}" />
+
+		<!-- Mapeador personalizado del Reader -->
 		<property name="rowMapper">
-			<bean class="es.cic.cmunoz.batching.MapeadoRowMapper" />
+			<bean class="es.maquina.batching.MapeadoRowMapper" />
 		</property>
 	</bean>
 
-	<!-- ItemWriter writes a line into output flat file -->
+	<!-- writter usado para escribir en fichero -->
 	<bean id="flatFileItemWriter"
 		class="org.springframework.batch.item.file.FlatFileItemWriter"
 		scope="step">
 
+		<!-- Define el archivo de escritura -->
 		<property name="resource" value="file:${carpeta.destino}" />
 
+		<!-- Define el caracter que separara los campos -->
 		<property name="lineAggregator">
 
 			<!-- An Aggregator which converts an object into delimited list of strings -->
 			<bean
 				class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
 
+				<!-- delimitador usado en el writter -->
 				<property name="delimiter" value="," />
 
+				<!-- Seteamos el extracotr de campos que usaremos para el mapeo -->
 				<property name="fieldExtractor">
 
-					<!-- Extractor which returns the value of beans property through reflection -->
+					<!-- Extractor de campos que recupera los valores a traves de reflection -->
 					<bean
 						class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
 						<property name="names" value="mapaCadenas" />
@@ -88,12 +100,14 @@
 		</property>
 	</bean>
 
-	<!-- Optional JobExecutionListener to perform business logic before and 
-		after the job -->
-	<bean id="jobListener"
-		class="es.cic.cmunoz.batching.MapeadoJobListener" />
+	<!-- Bean creado con fines educativos hay explicacion en el codigo -->
+	<bean id="valoresRecuperados" class="java.util.ArrayList" />
 
-	<!-- Step will need a transaction manager -->
+	<!-- listener que se ejecuta antes y despues de cada job -->
+	<bean id="jobListener"
+		class="es.maquina.batching.MapeadoJobListener" />
+
+	<!-- Administrador de transacciones -->
 	<bean id="transactionManager"
 		class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
 
@@ -102,8 +116,7 @@
 		<batch:step id="pasoUno">
 			<batch:tasklet transaction-manager="transactionManager">
 				<batch:chunk reader="databaseItemReader"
-					writer="flatFileItemWriter" 
-					commit-interval="${job.commit}" />
+					writer="flatFileItemWriter" commit-interval="${job.commit}" />
 			</batch:tasklet>
 		</batch:step>
 		<batch:listeners>
